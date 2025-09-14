@@ -1,0 +1,12 @@
+node_modules/
+store/
+dist/
+*.log
+.env
+.DS_Store
+temp-*
+*.tsbuildinfo
+bun.lockb
+google-credentials/*.json
+oauth-token.json
+C*.md

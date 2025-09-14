@@ -1,0 +1,42 @@
+{
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Simple WhatsApp Bot using Baileys and TypeScript",
+  "main": "whatsapp-bot.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run whatsapp-bot.ts",
+    "dev": "bun run whatsapp-bot.ts",
+    "build": "bun build whatsapp-bot.ts --outdir ./dist --target bun",
+    "typecheck": "bun tsc --noEmit",
+    "bot": "bun run whatsapp-bot.ts",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "typescript",
+    "bun",
+    "baileys",
+    "whatsapp-web",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@ai-sdk/google": "^2.0.14",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^7.0.0-rc.3",
+    "ai": "^5.0.44",
+    "express": "^5.1.0",
+    "google-auth-library": "^10.3.0",
+    "googleapis": "^159.0.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.4.0",
+    "@types/qrcode-terminal": "^0.12.2",
+    "typescript": "^5.9.2"
+  }
+}
