@@ -116,19 +116,6 @@ export class MessageHandler {
         }
       }
 
-      console.log('Attempting to save message to Google Sheets...');
-      this.saveMessageToSheets({
-        timestamp: timestamp.toISOString(),
-        direction: isFromMe ? '→' : '←',
-        sender: sender.split('@')[0],
-        chat: chatJid.split('@')[0],
-        messageType: mediaType || 'text',
-        content: content || '[Media]'
-      }).catch(error => {
-        console.error('⚠️ Failed to save message to sheets:', error);
-        Logger.error('Failed to save message to sheets', error);
-      });
-
       try {
         const direction = isFromMe ? '→' : '←';
         const logMsg = mediaType
@@ -146,6 +133,19 @@ export class MessageHandler {
       } catch (error) {
         Logger.error('Error logging message', error);
       }
+
+      console.log('Attempting to save message to Google Sheets...');
+      this.saveMessageToSheets({
+        timestamp: timestamp.toISOString(),
+        direction: isFromMe ? '→' : '←',
+        sender: sender.split('@')[0],
+        chat: chatJid.split('@')[0],
+        messageType: mediaType || 'text',
+        content: content || '[Media]'
+      }).catch(error => {
+        console.error('⚠️ Failed to save message to sheets:', error);
+        Logger.error('Failed to save message to sheets', error);
+      });
     }
   }
 
@@ -236,17 +236,6 @@ export class MessageHandler {
 
       await sock.sendMessage(chatJid, { text: responseText });
       console.log(`✅ AI response sent to ${senderName} (${responseText.length} chars)`);
-
-      this.saveMessageToSheets({
-        timestamp: new Date().toISOString(),
-        direction: '→',
-        sender: 'AI Bot',
-        chat: chatJid.split('@')[0],
-        messageType: 'text',
-        content: responseText
-      }).catch(error => {
-        Logger.error('Failed to save AI response to sheets', error);
-      });
 
       Logger.ai('AI response sent', {
         sender: sender.split('@')[0],
