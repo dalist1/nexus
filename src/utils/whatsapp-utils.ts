@@ -4,9 +4,7 @@
  * Check if content should trigger AI response
  */
 export function shouldTriggerAI(content: string): boolean {
-  const triggers = ['/ai', '/search', '/ask', '/help', '/code', '/think'];
-  const lowerContent = content.toLowerCase().trim();
-  return triggers.some(trigger => lowerContent.startsWith(trigger));
+  return content.trim().length > 0;
 }
 
 
@@ -43,11 +41,9 @@ export function parseAICommand(content: string): {
     prompt = content.replace(/^\/ai\s*/i, '');
   } else if (lowerContent.startsWith('/ask')) {
     prompt = content.replace(/^\/ask\s*/i, '');
-  } else if (lowerContent.startsWith('/help')) {
-    isHelp = true;
   }
 
-  return { useSearch, useUrlContext, useCodeExecution, useThinking, prompt, isHelp };
+  return { useSearch, useUrlContext, useCodeExecution, useThinking, prompt, isHelp: false };
 }
 
 /**

@@ -36,11 +36,10 @@ bun start
 ## 💬 How It Works
 
 Send messages to your bot:
-- `ping` - Test connectivity
-- `/help` - Show commands
-- Regular messages - AI conversation
+- **Any message** - AI conversation with context memory
+- `/ai <question>` - Simple AI questions without tools
 - `/search <query>` - Web search + AI analysis
-- `/code <problem>` - Code execution
+- `/code <problem>` - Code execution + AI help
 - `/think <problem>` - Deep reasoning mode
 
 ## 🌐 REST API

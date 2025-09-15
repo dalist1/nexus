@@ -6,7 +6,6 @@ import { MessageData } from '../../types';
 import {
   shouldTriggerAI,
   parseAICommand,
-  generateHelpMessage,
   formatToolUsage
 } from '../utils/whatsapp-utils';
 
@@ -67,14 +66,6 @@ export class MessageHandler {
         content = '[Unknown message type]';
       }
 
-      if (!isFromMe && content.toLowerCase().trim() === 'ping') {
-        try {
-          await this.getSock()!.sendMessage(chatJid, { text: 'pong' });
-          Logger.message('Auto-replied to ping', { sender });
-        } catch (error) {
-          Logger.error('Failed to send auto-reply', error);
-        }
-      }
 
       let isAIInteraction = false;
       if (shouldTriggerAI(content)) {
@@ -129,15 +120,9 @@ export class MessageHandler {
   private async handleAIMessage(chatJid: string, content: string, sender: string, mediaBuffer?: Buffer, mediaType?: string, filename?: string): Promise<void> {
     const { useSearch, useUrlContext, useCodeExecution, useThinking, prompt, isHelp } = parseAICommand(content);
 
-    if (isHelp) {
-      const helpMessage = generateHelpMessage(!!this.getSheetsService());
-      await this.getSock()!.sendMessage(chatJid, { text: helpMessage });
-      return;
-    }
-
     if (!prompt.trim()) {
       await this.getSock()!.sendMessage(chatJid, {
-        text: '❌ Please provide a message after the command. Use /help for examples.'
+        text: '❌ Please provide a message.'
       });
       return;
     }

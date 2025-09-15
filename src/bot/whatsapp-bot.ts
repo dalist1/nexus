@@ -188,7 +188,7 @@ export class WhatsAppBot {
         console.log(`✅ Logged in as: ${this.sock!.user!.name} (${this.sock!.user!.id})`);
         console.log('🤖 AI Service ready with Google Gemini');
         console.log('🤖 Available tools: Google Search, URL Context, Code Execution');
-        console.log('🤖 Send "/help" to see AI commands or "ping" to test connectivity');
+        console.log('🤖 Send any message for AI chat, or use /search, /code, /think for tools');
       }
     });
 
