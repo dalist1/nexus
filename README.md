@@ -1,4 +1,4 @@
-# WhatsApp AI Bot 🤖
+# WhatsApp AI Bot
 
 A **simple yet powerful WhatsApp bot** powered by Google's Gemini AI that can:
 - 🧠 **Answer questions intelligently** using advanced AI
@@ -57,6 +57,22 @@ Auto-log conversations to Google Sheets:
 1. Follow setup guide: [`docs/GOOGLE_SHEETS_SETUP.md`](docs/GOOGLE_SHEETS_SETUP.md)
 2. Drop OAuth credentials into `google-credentials/` folder
 3. Restart bot - auto-detects and sets up everything
+
+## 🔄 How It Works
+
+**Data Flow:**
+1. **WhatsApp** → Bot receives message via Baileys WebSocket
+2. **AI Processing** → Google Gemini analyzes with context memory
+3. **Tool Integration** → Optional web search, code execution, or reasoning
+4. **Response** → AI generates reply sent back to WhatsApp
+5. **Optional Logging** → Message data saved to Google Sheets via OAuth
+
+**Implementation:**
+- **Frontend**: WhatsApp Web protocol (Baileys)
+- **Backend**: TypeScript + Bun runtime
+- **AI**: Google Gemini with conversation memory
+- **Storage**: In-memory (24hr) + optional Google Sheets
+- **API**: Express.js REST endpoints on port 8080
 
 ## 🛠️ Development
 
