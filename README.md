@@ -10,14 +10,23 @@ A **simple yet powerful WhatsApp bot** powered by Google's Gemini AI that can:
 
 ## 🚀 Quick Start
 
-### 1. Install & Configure
+### 1. Install Bun
+```bash
+# Linux & macOS
+curl -fsSL https://bun.sh/install | bash
+
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+### 2. Install & Configure
 ```bash
 bun install
 echo "GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here" > .env
 ```
 Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-### 2. Start the Bot
+### 3. Start the Bot
 ```bash
 bun start
 ```
