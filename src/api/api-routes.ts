@@ -124,7 +124,7 @@ export class ApiRoutes {
     const port = parseInt(process.env.PORT || '8080');
     const server = app.listen(port)
       .on('listening', () => {
-        console.log(`🌐 API server running on port ${port}`);
+        console.log(`✅ API server ready on port ${port}`);
       })
       .on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {

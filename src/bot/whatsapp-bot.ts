@@ -47,6 +47,9 @@ export class WhatsAppBot {
   private async initializeApp(): Promise<void> {
     console.log('\n🚀 Starting WhatsApp AI Bot...');
     console.log('────────────────────────────────────────────────────────────────────────────────');
+    const port = process.env.PORT || '8080';
+    console.log(`🌐 API server starting on port ${port}`);
+    console.log('');
 
     await EnvironmentValidator.validateEnvironment();
     await this.promptGoogleSheetsSetup();
@@ -66,7 +69,7 @@ export class WhatsAppBot {
       console.log('3. Drop the JSON file into google-credentials/ folder');
       console.log('');
 
-      const skipSheets = await UserInput.promptUser('Skip Google Sheets and continue with WhatsApp only? (y/n): ');
+      const skipSheets = await UserInput.promptUser('Skip Google Sheets and continue with WhatsApp only? (y/n) [Ctrl+C to skip]: ');
       if (skipSheets.toLowerCase() === 'y' || skipSheets.toLowerCase() === 'yes') {
         console.log('✅ Continuing without Google Sheets integration');
         return;
