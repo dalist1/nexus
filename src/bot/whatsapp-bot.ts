@@ -23,6 +23,7 @@ export class WhatsAppBot {
   private aiService: AIService;
   private sheetsService: GoogleSheetsService | null = null;
   private messageHandler: MessageHandler;
+  private isReconnecting = false;
 
   constructor() {
     this.aiService = new AIService();
@@ -31,7 +32,6 @@ export class WhatsAppBot {
       () => this.sock,
       () => this.sheetsService
     );
-    this.setupRoutes();
     this.initializeApp();
   }
 
@@ -47,12 +47,16 @@ export class WhatsAppBot {
   private async initializeApp(): Promise<void> {
     console.log('\n🚀 Starting WhatsApp AI Bot...');
     console.log('────────────────────────────────────────────────────────────────────────────────');
-    const port = process.env.PORT || '8080';
-    console.log(`🌐 API server starting on port ${port}`);
-    console.log('');
 
     await EnvironmentValidator.validateEnvironment();
     await this.promptGoogleSheetsSetup();
+
+    // Start API server after OAuth setup is complete
+    const port = process.env.PORT || '8080';
+    console.log(`🌐 API server starting on port ${port}`);
+    console.log('');
+    this.setupRoutes();
+
     await this.start();
   }
 
@@ -174,16 +178,49 @@ export class WhatsAppBot {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
+        console.log('\n📱 WhatsApp QR Code:');
+        console.log('────────────────────────────────────────────────────────────────────────────────');
         QRCode.generate(qr, { small: true });
+        console.log('────────────────────────────────────────────────────────────────────────────────');
+        console.log('📱 Open WhatsApp → Settings → Linked Devices → Link a Device → Scan this QR code');
+        console.log('');
       }
 
       if (connection === 'close') {
-        const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-        Logger.connection(`Connection closed${shouldReconnect ? ', reconnecting...' : ''}`);
-        if (shouldReconnect) {
-          setTimeout(() => this.connectToWhatsApp(), 3000);
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+
+        // Check various disconnect reasons
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        const isRestartRequired = statusCode === DisconnectReason.restartRequired;
+        const isConnectionLost = statusCode === DisconnectReason.connectionLost;
+        const isConnectionClosed = statusCode === DisconnectReason.connectionClosed;
+        const isTimedOut = statusCode === DisconnectReason.timedOut;
+
+        // Don't retry if logged out or if already reconnecting
+        const shouldReconnect = !isLoggedOut && !isRestartRequired && !this.isReconnecting;
+
+        if (isLoggedOut) {
+          Logger.connection('Session logged out - restart required');
+          console.log('❌ WhatsApp session logged out. Please restart the bot to scan QR code again.');
+          process.exit(1);
+        } else if (isRestartRequired) {
+          Logger.connection('Restart required by WhatsApp');
+          console.log('🔄 WhatsApp requires restart. Please restart the bot.');
+          process.exit(1);
+        } else if (shouldReconnect && (isConnectionLost || isConnectionClosed || isTimedOut)) {
+          Logger.connection(`Connection ${isTimedOut ? 'timed out' : 'lost'}, reconnecting...`);
+          this.isReconnecting = true;
+          console.log('🔄 Connection lost. Reconnecting in 3 seconds...');
+          setTimeout(() => {
+            this.isReconnecting = false;
+            this.connectToWhatsApp();
+          }, 3000);
+        } else {
+          Logger.connection(`Connection closed (${statusCode})`);
+          console.log('❌ Connection closed. Please restart the bot if needed.');
         }
       } else if (connection === 'open') {
+        this.isReconnecting = false; // Reset reconnecting flag
         console.log('✅ WhatsApp Bot connected!');
         console.log(`✅ Logged in as: ${this.sock!.user!.name} (${this.sock!.user!.id})`);
         console.log('🤖 AI Service ready with Google Gemini');
@@ -199,7 +236,7 @@ export class WhatsAppBot {
   private async start(): Promise<void> {
     console.log('\n📱 WhatsApp Connection Setup');
     console.log('────────────────────────────────────────────────────────────────────────────────');
-    console.log('🔗 Scan this QR code with your WhatsApp app:');
+    console.log('🔗 Connecting to WhatsApp... QR code will appear below if needed');
     await this.connectToWhatsApp();
   }
 
