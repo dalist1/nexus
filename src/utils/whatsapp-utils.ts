@@ -9,17 +9,6 @@ export function shouldTriggerAI(content: string): boolean {
   return triggers.some(trigger => lowerContent.startsWith(trigger));
 }
 
-/**
- * Get media type from file extension for WhatsApp
- */
-export function getWhatsAppMediaType(ext: string): string {
-  const mediaTypes: Record<string, string> = {
-    '.jpg': 'image', '.jpeg': 'image', '.png': 'image', '.gif': 'image', '.webp': 'image',
-    '.mp4': 'video', '.avi': 'video', '.mov': 'video',
-    '.mp3': 'audio', '.ogg': 'audio', '.wav': 'audio', '.m4a': 'audio'
-  };
-  return mediaTypes[ext] || 'document';
-}
 
 /**
  * Parse AI command from message content

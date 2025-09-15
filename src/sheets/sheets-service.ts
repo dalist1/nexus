@@ -1,21 +1,23 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { existsSync, writeFileSync, readFileSync } from 'fs';
-import { MessageData } from './types';
+import { createInterface } from 'readline';
+import { MessageData } from '../../types';
 
 export class GoogleSheetsService {
   private oauth2Client: OAuth2Client;
   private sheets: any;
   private drive: any;
-  private tokenPath = './oauth-token.json';
+  private tokenPath = './google-credentials/oauth-token.json';
   private spreadsheetId?: string;
 
   constructor(private credentialsPath: string, spreadsheetId?: string) {
     this.spreadsheetId = spreadsheetId;
     const credentials = JSON.parse(readFileSync(credentialsPath, 'utf8'));
     const { client_id, client_secret, redirect_uris } = credentials.web || credentials.installed;
+    const redirectUri = 'urn:ietf:wg:oauth:2.0:oob';
 
-    this.oauth2Client = new OAuth2Client(client_id, client_secret, redirect_uris[0]);
+    this.oauth2Client = new OAuth2Client(client_id, client_secret, redirectUri);
   }
 
   async initialize(): Promise<void> {
@@ -49,18 +51,26 @@ export class GoogleSheetsService {
     console.log('\n2. Click "Allow" and copy the code');
     console.log('3. Paste the code here and press Enter:');
 
-    // Simple stdin reading for the code
-    process.stdout.write('Enter code: ');
-    const code = await new Promise<string>((resolve) => {
-      process.stdin.once('data', (data) => {
-        resolve(data.toString().trim());
-      });
-    });
+    const code = await this.promptForCode('Enter code: ');
 
     const { tokens } = await this.oauth2Client.getToken(code);
     this.oauth2Client.setCredentials(tokens);
     writeFileSync(this.tokenPath, JSON.stringify(tokens));
     console.log('✅ Token saved! OAuth setup complete.\n');
+  }
+
+  private async promptForCode(question: string): Promise<string> {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+      rl.question(question, (answer) => {
+        rl.close();
+        resolve(answer.trim());
+      });
+    });
   }
 
   private async createSpreadsheet(): Promise<string> {

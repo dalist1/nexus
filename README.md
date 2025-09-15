@@ -14,10 +14,12 @@ This project is an AI-powered WhatsApp bot built with TypeScript/Bun that integr
 
 ### WhatsApp Integration
 - ⚡ **Real-time Messaging**: Full WhatsApp Web protocol support
-- 🔒 **Privacy-First**: No message storage - all conversations are ephemeral
+- 📊 **Google Sheets Logging**: Optional automatic message logging to Google Sheets
+- 🔒 **Privacy-First**: Local OAuth, no cloud storage required
 - 📎 **Media Detection**: Handles images, videos, documents, and audio
 - ✅ **Typing Indicators**: Real-time user experience
 - 👥 **Group & DM Support**: Works in both individual and group chats
+- 🆔 **LID Privacy**: Compatible with WhatsApp's new privacy features
 
 ### API & Development
 - 🔄 **RESTful API**: HTTP endpoints for external integrations
@@ -40,31 +42,47 @@ This project is an AI-powered WhatsApp bot built with TypeScript/Bun that integr
 
 ## 🛠️ Installation
 
-1. **Install dependencies:**
+1. **Install Bun:**
+   ```bash
+   # Linux & macOS
+   curl -fsSL https://bun.sh/install | bash
+
+   # Windows (PowerShell)
+   powershell -c "irm bun.sh/install.ps1 | iex"
+
+   # Alternative: Install via npm
+   npm install -g bun
+   ```
+
+2. **Install dependencies:**
    ```bash
    bun install
    ```
 
-2. **Environment setup:**
+3. **Environment setup:**
+   - Get your Google AI API key from: https://ai.dev/apikey
+   - Create `.env` file:
    ```bash
-   # Create .env file with your API key
+   # Required: Google AI API key (format: AIza...)
    GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key_here
 
    # Optional: For Google Sheets integration
    GOOGLE_SHEETS_ID=your_spreadsheet_id_here
    ```
 
-3. **Start the bot:**
+4. **Start the bot:**
    ```bash
    bun run dev
    ```
 
-4. **Connect WhatsApp:**
-   - Scan the QR code with your WhatsApp app
-   - Bot is ready when you see the connection confirmation
+5. **Connect WhatsApp:**
+   - A QR code will appear in your terminal
+   - Open WhatsApp on your phone → **Settings** → **Linked Devices** → **Link a Device**
+   - Scan the QR code from your terminal
+   - Bot is ready when you see "✅ WhatsApp Bot connected!" message
    - Session data is saved in `store/auth/` for persistence
 
-5. **Optional - Google Sheets Integration:**
+6. **Optional - Google Sheets Integration:**
    - Create OAuth credentials in Google Cloud Console
    - Drag your OAuth credentials JSON file into the `google-credentials/` folder
    - Authorize once via browser (bot will guide you)
@@ -102,20 +120,25 @@ GET http://localhost:8080/api/conversation/chatId
 DELETE http://localhost:8080/api/conversation/chatId
 ```
 
-## 🧠 AI Architecture
+## 🏗️ Architecture
 
-### ModelMessage Implementation
-- **Proper conversation context** using AI SDK's `ModelMessage` structures
-- **User messages** with sender identification and content
-- **Assistant responses** maintained in memory only
-- **24-hour session memory** with automatic cleanup (no persistence)
-- **Configurable message limits** to prevent context overflow
+### WhatsApp Integration
+- **Baileys Library**: Direct WhatsApp Web protocol implementation
+- **QR Authentication**: Session persistence in `store/auth/`
+- **Message Filtering**: AI commands only, protocol messages ignored
+- **Auto-reconnect**: Handles connection drops automatically
 
-### Google AI SDK v5 Integration
-- **Google Search Tool**: Real-time web search with source attribution
-- **Code Execution Tool**: Python code running in secure environment
-- **URL Context Tool**: Direct analysis of web content
-- **Thinking Mode**: Advanced reasoning with configurable budgets
+### Google Sheets OAuth
+- **OAuth 2.0 Flow**: Desktop app credentials in `google-credentials/`
+- **Auto-detection**: Scans folder for JSON credentials on startup
+- **Token Storage**: Local `oauth-token.json` with refresh capability
+- **Auto-creation**: New spreadsheet created if none specified
+
+### AI Request-Response
+- **Google Gemini SDK**: Direct API integration with conversation memory
+- **Tool Integration**: Search, code execution, URL analysis, thinking mode
+- **Context Preservation**: In-memory conversation history per chat
+- **Source Attribution**: Web search results with URL references
 
 ## 🧪 Test Results
 
@@ -138,6 +161,21 @@ AI: "Based on what you just said: You love to eat **pizza**..."
 
 Stats: { messageCount: 4, lastActivity: "2025-09-14T18:08:01.397Z" }
 ```
+
+## 📊 Google Sheets Integration
+
+Optionally log all WhatsApp messages to Google Sheets with automatic OAuth setup:
+
+1. **Quick Setup**: Follow the [Google Sheets Setup Guide](./docs/GOOGLE_SHEETS_SETUP.md)
+2. **Auto-Create Spreadsheet**: Bot creates and configures everything automatically
+3. **Real-time Logging**: Messages saved instantly with timestamps and metadata
+4. **Privacy Compliant**: Uses your personal Google Drive with local OAuth
+
+**Example Logged Data:**
+| Timestamp | Direction | Sender | Chat | Message Type | Content |
+|-----------|-----------|--------|------|--------------|------------|
+| 2024-01-15 10:30:25 | Incoming | +1234567890 | Group Chat | text | Hello everyone! |
+| 2024-01-15 10:31:10 | Outgoing | You | John Doe | text | Hi there! |
 
 ## 📁 Project Structure
 
@@ -208,12 +246,6 @@ bun start                 # Start production server
 - **Auto-Spreadsheet Creation**: Automatically creates Google Sheets with proper formatting
 - **OAuth Integration**: Uses your personal Google Drive storage (works with Google One)
 - **One-Time Authorization**: Browser-based auth with automatic token management
-
-### Real-time Capabilities
-- **Typing Indicators**: Shows "typing..." during AI processing
-- **Source Attribution**: Web search results include 13+ sources
-- **Tool Usage Tracking**: Shows which AI tools were used
-- **Error Handling**: Graceful degradation with user feedback
 
 ### Production Ready
 - **Type Safety**: Full TypeScript implementation with strict checking

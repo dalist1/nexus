@@ -9,7 +9,7 @@ import {
   AIServiceOptions,
   ConversationContext,
   AIResponse
-} from './types';
+} from '../../types';
 import { getMediaType } from './ai-utils';
 
 /**
@@ -104,12 +104,25 @@ export async function generateWithThinking(
     }
 
     return {
-      text: result.text,
-      sources: result.sources,
-      groundingMetadata: result.providerMetadata?.google?.groundingMetadata,
-      toolCalls: toolCalls,
-      toolResults: result.toolResults,
-      reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('\n') : result.reasoning,
+      content: result.text,
+      sources: result.sources?.map(source => ({
+        sourceType: (source as any).sourceType || 'url' as const,
+        id: source.id,
+        url: (source as any).url,
+        title: source.title,
+        filename: (source as any).filename,
+        mediaType: (source as any).mediaType,
+        providerMetadata: source.providerMetadata
+      })),
+      reasoning: Array.isArray(result.reasoning)
+        ? result.reasoning.map((r: any) => r.text).join('\n')
+        : result.reasoning,
+      toolCalls: toolCalls.map(tc => ({
+        id: tc.toolCallId,
+        name: tc.toolName,
+        parameters: (tc as any).args as Record<string, unknown>
+      })),
+      providerMetadata: result.providerMetadata
     };
   } catch (error) {
     console.error('AI Thinking Service Error:', error);
@@ -188,11 +201,25 @@ export async function generateWithFiles(
     }
 
     return {
-      text: result.text,
-      sources: result.sources,
-      groundingMetadata: result.providerMetadata?.google?.groundingMetadata,
-      toolCalls: toolCalls,
-      toolResults: result.toolResults,
+      content: result.text,
+      sources: result.sources?.map(source => ({
+        sourceType: (source as any).sourceType || 'url' as const,
+        id: source.id,
+        url: (source as any).url,
+        title: source.title,
+        filename: (source as any).filename,
+        mediaType: (source as any).mediaType,
+        providerMetadata: source.providerMetadata
+      })),
+      reasoning: Array.isArray(result.reasoning)
+        ? result.reasoning.map((r: any) => r.text).join('\n')
+        : result.reasoning,
+      toolCalls: toolCalls.map(tc => ({
+        id: tc.toolCallId,
+        name: tc.toolName,
+        parameters: (tc as any).args as Record<string, unknown>
+      })),
+      providerMetadata: result.providerMetadata
     };
   } catch (error) {
     console.error('AI Service File Error:', error);
@@ -305,11 +332,25 @@ export async function generateWithMedia(
     }
 
     return {
-      text: result.text,
-      sources: result.sources,
-      groundingMetadata: result.providerMetadata?.google?.groundingMetadata,
-      toolCalls: toolCalls,
-      toolResults: result.toolResults,
+      content: result.text,
+      sources: result.sources?.map(source => ({
+        sourceType: (source as any).sourceType || 'url' as const,
+        id: source.id,
+        url: (source as any).url,
+        title: source.title,
+        filename: (source as any).filename,
+        mediaType: (source as any).mediaType,
+        providerMetadata: source.providerMetadata
+      })),
+      reasoning: Array.isArray(result.reasoning)
+        ? result.reasoning.map((r: any) => r.text).join('\n')
+        : result.reasoning,
+      toolCalls: toolCalls.map(tc => ({
+        id: tc.toolCallId,
+        name: tc.toolName,
+        parameters: (tc as any).args as Record<string, unknown>
+      })),
+      providerMetadata: result.providerMetadata
     };
   } catch (error) {
     console.error('AI Media Service Error:', error);

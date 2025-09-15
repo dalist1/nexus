@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { AIService } from '../ai-service';
+import { AIService } from '../src/ai/ai-service';
 
 async function testAIIntegration() {
   console.log('🧪 Testing Enhanced Google AI SDK Integration with Conversation Context...');
@@ -11,19 +11,19 @@ async function testAIIntegration() {
     // Test basic AI response
     console.log('\n1. Testing basic AI response:');
     const basicResponse = await aiService.generateResponse('Say hello and confirm you are working!');
-    console.log('✓ Basic response:', basicResponse.text);
+    console.log('✓ Basic response:', basicResponse.content);
 
     // Test with search
     console.log('\n2. Testing AI with Google Search:');
     const searchResponse = await aiService.generateResponse('What is the latest news about AI in 2024?', {
       useSearch: true
     });
-    console.log('✓ Search response:', searchResponse.text);
+    console.log('✓ Search response:', searchResponse.content);
     if (searchResponse.sources && searchResponse.sources.length > 0) {
       console.log('✓ Sources found:', searchResponse.sources.length);
     }
     if (searchResponse.toolCalls && searchResponse.toolCalls.length > 0) {
-      console.log('✓ Tools used:', searchResponse.toolCalls.map(tc => tc.toolName));
+      console.log('✓ Tools used:', searchResponse.toolCalls.map(tc => tc.name));
     }
 
     // Test thinking mode
@@ -32,7 +32,7 @@ async function testAIIntegration() {
       thinkingBudget: 2048,
       includeThoughts: true
     });
-    console.log('✓ Thinking response:', thinkingResponse.text);
+    console.log('✓ Thinking response:', thinkingResponse.content);
     if (thinkingResponse.reasoning) {
       console.log('✓ Reasoning provided:', thinkingResponse.reasoning.substring(0, 100) + '...');
     }
@@ -42,9 +42,9 @@ async function testAIIntegration() {
     const codeResponse = await aiService.generateResponse('Calculate the first 10 fibonacci numbers using Python', {
       useCodeExecution: true
     });
-    console.log('✓ Code response:', codeResponse.text);
+    console.log('✓ Code response:', codeResponse.content);
     if (codeResponse.toolCalls && codeResponse.toolCalls.length > 0) {
-      console.log('✓ Code execution tools used:', codeResponse.toolCalls.map(tc => tc.toolName));
+      console.log('✓ Code execution tools used:', codeResponse.toolCalls.map(tc => tc.name));
     }
 
     // Test conversation context
@@ -52,10 +52,10 @@ async function testAIIntegration() {
     const chatId = 'test-chat-123';
 
     const response1 = await aiService.generateResponse('My name is John and I love pizza', {}, chatId, 'John');
-    console.log('✓ First message:', response1.text.substring(0, 50) + '...');
+    console.log('✓ First message:', response1.content.substring(0, 50) + '...');
 
     const response2 = await aiService.generateResponse('What do I love to eat?', {}, chatId, 'John');
-    console.log('✓ Context-aware response:', response2.text.substring(0, 50) + '...');
+    console.log('✓ Context-aware response:', response2.content.substring(0, 50) + '...');
 
     const conversationStats = aiService.getConversationSummary(chatId);
     console.log('✓ Conversation stats:', conversationStats);
@@ -70,7 +70,7 @@ async function testAIIntegration() {
         chatId,
         'TestUser'
       );
-      console.log('✓ Media integration ready:', mediaResponse.text.substring(0, 30) + '...');
+      console.log('✓ Media integration ready:', mediaResponse.content.substring(0, 30) + '...');
     } catch (error) {
       console.log('✓ Media integration structure in place');
     }

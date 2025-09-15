@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { GoogleSheetsService } from '../sheets-service';
+import { GoogleSheetsService } from '../src/sheets/sheets-service';
 
 async function testSheetsService() {
   console.log('📊 Testing Google Sheets Integration...');

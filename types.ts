@@ -1,39 +1,20 @@
+// Import and use core AI SDK message types
+import type {
+  CoreMessage,
+  CoreUserMessage,
+  CoreAssistantMessage,
+  TextPart
+} from 'ai';
 
-export type UserMessage = {
-  role: 'user';
-  content: string | Array<TextPart | ImagePart | FilePart>;
-};
+// Re-export AI SDK types with proper export type syntax
+export type ModelMessage = CoreMessage;
+export type UserMessage = CoreUserMessage;
+export type AssistantMessage = CoreAssistantMessage;
 
-export type AssistantMessage = {
-  role: 'assistant';
-  content: string;
-};
+// Re-export message part types
+export type { TextPart };
 
-export type SystemMessage = {
-  role: 'system';
-  content: string;
-};
-
-export type ModelMessage = UserMessage | AssistantMessage | SystemMessage;
-
-export type TextPart = {
-  type: 'text';
-  text: string;
-};
-
-export type ImagePart = {
-  type: 'image';
-  image: any;
-  mediaType?: string;
-};
-
-export type FilePart = {
-  type: 'file';
-  data: any;
-  mediaType: string;
-  filename?: string;
-};
-
+// Application-specific types
 export interface AIServiceOptions {
   model?: string;
   systemPrompt?: string;
@@ -49,49 +30,64 @@ export interface ConversationContext {
   lastActivity: Date;
 }
 
-export interface AIResponse {
-  text: string;
-  sources?: any[];
-  groundingMetadata?: any;
-  toolCalls?: any[];
-  toolResults?: any[];
-  reasoning?: string;
+// Source type based on AI SDK documentation - flexible to handle different source types
+export interface Source {
+  sourceType: 'url' | 'document';
+  id: string;
+  url?: string; // Optional for document sources
+  title?: string;
+  filename?: string; // For document sources
+  mediaType?: string; // For document sources
+  providerMetadata?: Record<string, any>;
 }
 
-export type MessageRequest = {
+export interface AIResponse {
+  content: string;
+  sources?: Source[];
+  reasoning?: string;
+  toolCalls?: Array<{
+    id: string;
+    name: string;
+    parameters: Record<string, unknown>;
+  }>;
+  providerMetadata?: Record<string, any>;
+}
+
+export interface MessageRequest {
   recipient: string;
   message?: string;
   media_path?: string;
-};
+}
 
-export type ApiResponse = {
+export interface ApiResponse {
   success: boolean;
   message: string;
-};
+}
 
-export type HealthResponse = {
+export interface HealthResponse {
   status: string;
-  connected: boolean;
-  user: string | null;
-  aiServiceConnected: boolean;
-};
+  whatsapp: string;
+  ai: string;
+  sheets: string;
+  timestamp: string;
+}
 
-export type AIRequest = {
+export interface AIRequest {
   recipient: string;
   prompt: string;
   useSearch?: boolean;
   useUrlContext?: boolean;
   useCodeExecution?: boolean;
   useThinking?: boolean;
-};
+}
 
-export type ConversationStatsRequest = {
+export interface ConversationStatsRequest {
   chatId: string;
-};
+}
 
-export type ClearConversationRequest = {
+export interface ClearConversationRequest {
   chatId: string;
-};
+}
 
 export interface MessageData {
   timestamp: string;

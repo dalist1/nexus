@@ -2,15 +2,15 @@
   "name": "whatsapp-bot",
   "version": "1.0.0",
   "description": "Simple WhatsApp Bot using Baileys and TypeScript",
-  "main": "whatsapp-bot.ts",
+  "main": "main.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run whatsapp-bot.ts",
-    "dev": "bun run whatsapp-bot.ts",
-    "build": "bun build whatsapp-bot.ts --outdir ./dist --target bun",
+    "start": "bun run main.ts",
+    "dev": "bun run main.ts",
+    "build": "bun build main.ts --outdir ./dist --target bun",
     "typecheck": "bun tsc --noEmit",
-    "bot": "bun run whatsapp-bot.ts",
-    "test": "echo \"No tests specified\" && exit 0"
+    "bot": "bun run main.ts",
+    "test": "bun run tests/test-ai.ts && bun run tests/test-oauth-detection.ts && echo \"Tests completed\""
   },
   "keywords": [
     "whatsapp",

@@ -4,30 +4,53 @@ This guide shows how to set up **automatic message logging to Google Sheets** us
 
 ## 🚀 Quick OAuth Setup
 
-### 1. Create OAuth Credentials
+### 1. Create Google Cloud Project & Enable APIs
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project (or use existing)
-3. Enable **Google Sheets API** and **Google Drive API**:
+3. **Enable Required APIs**:
    - Go to "APIs & Services" > "Library"
-   - Search for "Google Sheets API" → Click "Enable"
-   - Search for "Google Drive API" → Click "Enable"
+   - **Search "Google Sheets API"** → Click "Enable"
+   - **Search "Google Drive API"** → Click "Enable"
 
-4. Create OAuth 2.0 Client ID:
+   **Why these APIs?**
+   - **Google Sheets API**: Read/write access to spreadsheets
+   - **Google Drive API**: Create new spreadsheets in your Drive
+
+4. **Configure OAuth Consent Screen** (if first time):
+   - Go to "APIs & Services" > "OAuth consent screen"
+   - Choose "External" for testing
+   - Fill required fields: App name, User support email, Developer email
+   - Add your email to "Test users" section
+
+5. **Create OAuth 2.0 Client ID**:
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth 2.0 Client ID"
    - Choose "Desktop application"
    - Name it `whatsapp-bot`
    - Click "Create"
 
-5. Download Credentials:
+6. **Download Credentials**:
    - Click the download icon for your OAuth client
-   - Download the JSON file
+   - Save the JSON file (name doesn't matter)
 
 ### 2. Add OAuth Credentials
 Simply **drag and drop** your downloaded JSON file into the `google-credentials/` folder.
-- No renaming required
-- No manual file placement
-- Bot automatically detects OAuth credentials
+- **No renaming required** - any `.json` file works
+- **Auto-detection** - bot scans folder on startup
+- **Secure storage** - folder is gitignored by default
+
+**What happens after you drop the file:**
+1. Bot detects your OAuth credentials automatically
+2. Prompts you for browser authorization (one-time only)
+3. Creates `oauth-token.json` in `google-credentials/` folder (auto-generated)
+4. Token includes refresh capability for long-term use
+
+**File organization after setup:**
+```
+google-credentials/
+├── client_secret_*.json          # Your OAuth credentials (downloaded)
+└── oauth-token.json              # Generated after authorization
+```
 
 ### 3. Start the Bot (Auto-Setup with OAuth)
 ```bash
@@ -113,9 +136,10 @@ bun run tests/test-sheets.ts
 
 ## 🔐 Security
 
-- OAuth credentials are gitignored (secure)
-- Tokens are stored locally and encrypted by Google's library
-- Minimal permissions requested (only Sheets + Drive file creation)
-- No service account keys or complex sharing required
+- **OAuth credentials**: Stored in `google-credentials/` (gitignored)
+- **Access tokens**: Auto-saved in `google-credentials/oauth-token.json`
+- **Minimal permissions**: Only Google Sheets + Drive file creation
+- **Local storage**: No cloud storage or service account keys required
+- **Auto-refresh**: Tokens refresh automatically without re-authorization
 
 Your WhatsApp messages will now be automatically logged to Google Sheets using your personal storage! 🎉
