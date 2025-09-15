@@ -20,7 +20,8 @@ This guide shows how to set up **automatic message logging to Google Sheets** us
    - Go to "APIs & Services" > "OAuth consent screen"
    - Choose "External" for testing
    - Fill required fields: App name, User support email, Developer email
-   - Add your email to "Test users" section
+   - Click "Audience" section → under "Test users" click "Add Users"
+   - Add your email address and save
 
 5. **Create OAuth 2.0 Client ID**:
    - Go to "APIs & Services" > "Credentials"
@@ -28,6 +29,8 @@ This guide shows how to set up **automatic message logging to Google Sheets** us
    - Choose "Desktop application"
    - Name it `whatsapp-bot`
    - Click "Create"
+
+   **Desktop application** allows the bot to handle OAuth authorization locally by redirecting to a special URL where you can copy the authorization code.
 
 6. **Download Credentials**:
    - Click the download icon for your OAuth client
