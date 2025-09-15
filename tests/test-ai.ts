@@ -23,7 +23,7 @@ async function testAIIntegration() {
       console.log('✓ Sources found:', searchResponse.sources.length);
     }
     if (searchResponse.toolCalls && searchResponse.toolCalls.length > 0) {
-      console.log('✓ Tools used:', searchResponse.toolCalls.map(tc => tc.name));
+      console.log('✓ Tools used:', searchResponse.toolCalls.map(tc => tc.type));
     }
 
     // Test thinking mode
@@ -44,7 +44,7 @@ async function testAIIntegration() {
     });
     console.log('✓ Code response:', codeResponse.content);
     if (codeResponse.toolCalls && codeResponse.toolCalls.length > 0) {
-      console.log('✓ Code execution tools used:', codeResponse.toolCalls.map(tc => tc.name));
+      console.log('✓ Code execution tools used:', codeResponse.toolCalls.map(tc => tc.type));
     }
 
     // Test conversation context

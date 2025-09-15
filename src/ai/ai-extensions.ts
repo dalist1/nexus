@@ -1,4 +1,3 @@
-// AI Service extension methods for media and thinking features
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { readFileSync } from 'fs';
@@ -12,9 +11,6 @@ import {
 } from '../../types';
 import { getMediaType } from './ai-utils';
 
-/**
- * Generate AI response with thinking mode (reasoning)
- */
 export async function generateWithThinking(
   prompt: string,
   options: AIServiceOptions & { thinkingBudget?: number; includeThoughts?: boolean } = {},
@@ -51,7 +47,6 @@ export async function generateWithThinking(
   }
 
   try {
-    // Get conversation context if chatId is provided
     let messages: ModelMessage[] = [];
 
     if (chatId && getConversationContext) {
@@ -59,7 +54,6 @@ export async function generateWithThinking(
       messages = [...context.messages];
     }
 
-    // Add the new user message
     const userMessage: UserMessage = {
       role: 'user',
       content: senderName ? `${senderName}: ${prompt}` : prompt
@@ -81,7 +75,6 @@ export async function generateWithThinking(
       },
     });
 
-    // Store the assistant's response in conversation history
     if (chatId && addToConversationHistory) {
       const assistantMessage: AssistantMessage = {
         role: 'assistant',
@@ -90,10 +83,8 @@ export async function generateWithThinking(
       addToConversationHistory(chatId, userMessage, assistantMessage);
     }
 
-    // Tool call detection for Google search
     let toolCalls = result.toolCalls || [];
 
-    // If we have sources but no explicit tool calls, infer Google search was used
     if ((result.sources && result.sources.length > 0) ||
         (result.providerMetadata?.google?.groundingMetadata && !toolCalls.length)) {
       toolCalls.push({
@@ -119,7 +110,7 @@ export async function generateWithThinking(
         : result.reasoning,
       toolCalls: toolCalls.map(tc => ({
         id: tc.toolCallId,
-        name: tc.toolName,
+        type: tc.toolName,
         parameters: (tc as any).args as Record<string, unknown>
       })),
       providerMetadata: result.providerMetadata
@@ -130,9 +121,6 @@ export async function generateWithThinking(
   }
 }
 
-/**
- * Generate AI response with files
- */
 export async function generateWithFiles(
   prompt: string,
   filePaths: string[],
@@ -187,10 +175,8 @@ export async function generateWithFiles(
       tools: Object.keys(tools).length > 0 ? tools : undefined,
     });
 
-    // Tool call detection for Google search
     let toolCalls = result.toolCalls || [];
 
-    // If we have sources but no explicit tool calls, infer Google search was used
     if ((result.sources && result.sources.length > 0) ||
         (result.providerMetadata?.google?.groundingMetadata && !toolCalls.length)) {
       toolCalls.push({
@@ -216,7 +202,7 @@ export async function generateWithFiles(
         : result.reasoning,
       toolCalls: toolCalls.map(tc => ({
         id: tc.toolCallId,
-        name: tc.toolName,
+        type: tc.toolName,
         parameters: (tc as any).args as Record<string, unknown>
       })),
       providerMetadata: result.providerMetadata
@@ -227,9 +213,6 @@ export async function generateWithFiles(
   }
 }
 
-/**
- * Generate AI response with media files
- */
 export async function generateWithMedia(
   prompt: string,
   mediaFiles: Array<{ data: Buffer; mediaType: string; filename?: string }>,
@@ -265,7 +248,6 @@ export async function generateWithMedia(
   }
 
   try {
-    // Get conversation context if chatId is provided
     let messages: ModelMessage[] = [];
 
     if (chatId && getConversationContext) {
@@ -309,7 +291,6 @@ export async function generateWithMedia(
       tools: Object.keys(tools).length > 0 ? tools : undefined,
     });
 
-    // Store the assistant's response in conversation history
     if (chatId && addToConversationHistory) {
       const assistantMessage: AssistantMessage = {
         role: 'assistant',
@@ -318,10 +299,8 @@ export async function generateWithMedia(
       addToConversationHistory(chatId, userMessage, assistantMessage);
     }
 
-    // Tool call detection for Google search
     let toolCalls = result.toolCalls || [];
 
-    // If we have sources but no explicit tool calls, infer Google search was used
     if ((result.sources && result.sources.length > 0) ||
         (result.providerMetadata?.google?.groundingMetadata && !toolCalls.length)) {
       toolCalls.push({
@@ -347,7 +326,7 @@ export async function generateWithMedia(
         : result.reasoning,
       toolCalls: toolCalls.map(tc => ({
         id: tc.toolCallId,
-        name: tc.toolName,
+        type: tc.toolName,
         parameters: (tc as any).args as Record<string, unknown>
       })),
       providerMetadata: result.providerMetadata

@@ -42,4 +42,8 @@ export class ConversationManager {
   clearConversation(chatId: string): void {
     this.conversationHistory.delete(chatId);
   }
+
+  get conversations(): Map<string, ConversationContext> {
+    return this.conversationHistory;
+  }
 }

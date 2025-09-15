@@ -47,7 +47,7 @@ export interface AIResponse {
   reasoning?: string;
   toolCalls?: Array<{
     id: string;
-    name: string;
+    type: string;
     parameters: Record<string, unknown>;
   }>;
   providerMetadata?: Record<string, any>;

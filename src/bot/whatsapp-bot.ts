@@ -6,7 +6,7 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import express from 'express';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, rmSync } from 'fs';
 import QRCode from 'qrcode-terminal';
 import { AIService } from '../ai/ai-service';
 import { GoogleSheetsService, autoSetupGoogleSheets } from '../sheets/sheets-service';
@@ -26,7 +26,15 @@ export class WhatsAppBot {
   private isReconnecting = false;
 
   constructor() {
-    this.aiService = new AIService();
+    console.log('🤖 WhatsApp Bot constructor: Initializing AI Service...');
+    try {
+      this.aiService = new AIService();
+      console.log('✅ AI Service initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize AI Service:', error);
+      throw error;
+    }
+
     this.messageHandler = new MessageHandler(
       this.aiService,
       () => this.sock,
@@ -105,6 +113,7 @@ export class WhatsAppBot {
       if (isConnected) {
         console.log('✅ Google Sheets integration ready!');
         console.log(`🔗 Spreadsheet: https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`);
+        console.log('📊 Google Sheets service initialized and ready for message logging');
       } else {
         console.log('❌ Google Sheets connection test failed');
         this.sheetsService = null;
@@ -204,9 +213,25 @@ export class WhatsAppBot {
         const shouldReconnect = !isLoggedOut && !this.isReconnecting;
 
         if (isLoggedOut) {
-          Logger.connection('Session logged out - restart required');
-          console.log('❌ WhatsApp session logged out. Please restart the bot to scan QR code again.');
-          process.exit(1);
+          Logger.connection('Session logged out - clearing auth and reconnecting');
+          console.log('❌ WhatsApp session expired. Clearing authentication...');
+
+          // Clear the auth store to force fresh QR code
+          try {
+            if (existsSync('./store')) {
+              rmSync('./store', { recursive: true, force: true });
+              console.log('🔄 Authentication cleared. Reconnecting...');
+            }
+          } catch (error) {
+            Logger.error('Failed to clear auth store', error);
+          }
+
+          // Reconnect after clearing auth (will show QR code)
+          this.isReconnecting = true;
+          setTimeout(() => {
+            this.isReconnecting = false;
+            this.connectToWhatsApp();
+          }, 2000);
         } else if (shouldReconnect && (isConnectionLost || isConnectionClosed || isTimedOut || isRestartRequired)) {
           // Treat restartRequired as a reconnectable issue during auth process
           Logger.connection(`Connection ${isTimedOut ? 'timed out' : isRestartRequired ? 'requires restart' : 'lost'}, reconnecting...`);
@@ -226,7 +251,7 @@ export class WhatsAppBot {
         console.log(`✅ Logged in as: ${this.sock!.user!.name} (${this.sock!.user!.id})`);
         console.log('🤖 AI Service ready with Google Gemini');
         console.log('🤖 Available tools: Google Search, URL Context, Code Execution');
-        console.log('🤖 Send any message for AI chat, or use /search, /code, /think for tools');
+        console.log('🤖 Use /ai for questions or /search for web search');
       }
     });
 

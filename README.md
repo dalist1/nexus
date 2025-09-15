@@ -35,12 +35,11 @@ bun start
 
 ## 💬 How It Works
 
-Send messages to your bot:
-- **Any message** - AI conversation with context memory
-- `/ai <question>` - Simple AI questions without tools
+Send commands to your bot:
+- `/ai <question>` - AI conversation with context memory
 - `/search <query>` - Web search + AI analysis
-- `/code <problem>` - Code execution + AI help
-- `/think <problem>` - Deep reasoning mode
+
+*Note: Bot only responds to these specific commands and ignores regular text messages.*
 
 ## 🌐 REST API
 

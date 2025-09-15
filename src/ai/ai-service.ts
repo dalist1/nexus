@@ -25,6 +25,10 @@ export class AIService {
     }
     this.defaultModel = 'gemini-2.5-flash';
     this.conversationManager = new ConversationManager();
+
+    console.log('🧠 AI Service initialized');
+    console.log(`API Key configured: ${this.apiKey ? 'YES' : 'NO'}`);
+    console.log(`Default model: ${this.defaultModel}`);
   }
 
   async generateResponse(
@@ -44,10 +48,12 @@ export class AIService {
     const tools = ToolManager.getTools(useSearch, useUrlContext, useCodeExecution);
 
     try {
+      console.log('Building messages');
       let messages: ModelMessage[] = [];
       if (chatId) {
         const context = this.conversationManager.getConversationContext(chatId, options.maxMessages || 20);
         messages = [...context.messages];
+        console.log(`Added ${messages.length} context messages`);
       }
 
       const userMessage: UserMessage = {
@@ -55,7 +61,9 @@ export class AIService {
         content: [{ type: 'text', text: prompt } as TextPart]
       };
       messages.push(userMessage);
+      console.log(`Total messages: ${messages.length}`);
 
+      console.log('🚀 Calling Google AI SDK...');
       const result = await generateText({
         model: google(model),
         messages,
@@ -64,16 +72,31 @@ export class AIService {
         maxRetries: 2
       });
 
+      console.log('AI SDK returned result:', {
+        hasText: !!result.text,
+        textLength: result.text?.length || 0,
+        hasToolCalls: !!(result.toolCalls?.length),
+        hasSources: !!(result.sources?.length)
+      });
+
       if (chatId) {
         const assistantMessage: AssistantMessage = {
           role: 'assistant',
-          content: result.text
+          content: result.text || ''
         };
         this.conversationManager.addToConversationHistory(chatId, userMessage, assistantMessage);
+        console.log('Added to conversation history');
       }
 
-      return ResponseProcessor.processResponse(result);
+      const processedResponse = ResponseProcessor.processResponse(result);
+      console.log('Processed response:', {
+        hasContent: !!processedResponse.content,
+        contentLength: processedResponse.content?.length || 0
+      });
+
+      return processedResponse;
     } catch (error) {
+      console.error('❌ generateResponse: Error occurred:', error);
       throw new Error(`AI service error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -84,7 +107,17 @@ export class AIService {
     chatId?: string,
     senderName?: string
   ): Promise<AIResponse> {
-    return generateThinking(prompt, options, chatId, senderName);
+    return generateThinking(
+      prompt,
+      options,
+      chatId,
+      senderName,
+      this.conversationManager.conversations,
+      (chatId: string, maxMessages: number) => this.conversationManager.getConversationContext(chatId, maxMessages),
+      (chatId: string, userMessage: any, assistantMessage: any) => this.conversationManager.addToConversationHistory(chatId, userMessage, assistantMessage),
+      this.defaultModel,
+      20
+    );
   }
 
   async generateWithMedia(
@@ -94,7 +127,18 @@ export class AIService {
     chatId?: string,
     senderName?: string
   ): Promise<AIResponse> {
-    return generateWithMedia(prompt, mediaFiles, options, chatId, senderName);
+    return generateWithMedia(
+      prompt,
+      mediaFiles,
+      options,
+      chatId,
+      senderName,
+      this.conversationManager.conversations,
+      (chatId: string, maxMessages: number) => this.conversationManager.getConversationContext(chatId, maxMessages),
+      (chatId: string, userMessage: any, assistantMessage: any) => this.conversationManager.addToConversationHistory(chatId, userMessage, assistantMessage),
+      this.defaultModel,
+      20
+    );
   }
 
   getConversationSummary(chatId: string): { messageCount: number; lastActivity: Date | null } {

@@ -28,6 +28,15 @@ export class MessageHandler {
       let sender = isFromMe ? this.getSock()!.user!.id : (m.key.participant || chatJid);
       const timestamp = new Date((m.messageTimestamp as number) * 1000);
 
+      console.log(`Message details:`, {
+        chatJid: chatJid.split('@')[0],
+        isFromMe,
+        fromMeKey: m.key.fromMe,
+        participant: m.key.participant?.split('@')[0],
+        sender: sender.split('@')[0],
+        botUserId: this.getSock()?.user?.id?.split('@')[0],
+        messageType
+      });
 
       let content = '';
       let mediaType: string | undefined;
@@ -68,9 +77,14 @@ export class MessageHandler {
       }
 
 
+      console.log(`Processing message: "${content}" from ${sender.split('@')[0]} (isFromMe: ${isFromMe})`);
+      console.log(`shouldTriggerAI result: ${shouldTriggerAI(content)} for content: "${content}"`);
+
       let isAIInteraction = false;
       if (!isFromMe && shouldTriggerAI(content)) {
         isAIInteraction = true;
+        console.log(`👀 AI trigger detected from ${sender.split('@')[0]}: "${content}"`);
+
         try {
           let mediaBuffer: Buffer | undefined;
           let actualMediaType: string | undefined;
@@ -83,20 +97,37 @@ export class MessageHandler {
               Logger.error('Failed to process media', error);
             }
           }
-          await this.saveMessageToSheets({
-            timestamp: timestamp.toISOString(),
-            direction: isFromMe ? '→' : '←',
-            sender: sender.split('@')[0],
-            chat: chatJid.split('@')[0],
-            messageType: mediaType || 'text',
-            content: content || '[Media]'
-          });
 
+
+          console.log(`About to call handleAIMessage for: "${content}"`);
           await this.handleAIMessage(chatJid, content, sender, mediaBuffer, actualMediaType, actualFilename);
+          console.log(`✅ handleAIMessage completed for: "${content}"`);
         } catch (error) {
+          console.error(`❌ Failed to process AI message from ${sender.split('@')[0]}:`, error);
           Logger.error('Failed to process AI message', error);
+
+          try {
+            await this.getSock()!.sendMessage(chatJid, {
+              text: '❌ Sorry, I encountered an error processing your request. Please try again later.'
+            });
+          } catch (sendError) {
+            console.error('Failed to send error message:', sendError);
+          }
         }
       }
+
+      console.log('Attempting to save message to Google Sheets...');
+      this.saveMessageToSheets({
+        timestamp: timestamp.toISOString(),
+        direction: isFromMe ? '→' : '←',
+        sender: sender.split('@')[0],
+        chat: chatJid.split('@')[0],
+        messageType: mediaType || 'text',
+        content: content || '[Media]'
+      }).catch(error => {
+        console.error('⚠️ Failed to save message to sheets:', error);
+        Logger.error('Failed to save message to sheets', error);
+      });
 
       try {
         const direction = isFromMe ? '→' : '←';
@@ -119,24 +150,31 @@ export class MessageHandler {
   }
 
   private async handleAIMessage(chatJid: string, content: string, sender: string, mediaBuffer?: Buffer, mediaType?: string, filename?: string): Promise<void> {
+    console.log(`handleAIMessage called with content: "${content}"`);
+
     const { useSearch, useUrlContext, useCodeExecution, useThinking, prompt, isHelp } = parseAICommand(content);
+    console.log(`Parsed command - prompt: "${prompt}", useSearch: ${useSearch}, useThinking: ${useThinking}`);
 
     if (!prompt.trim()) {
+      console.log('⚠️ Empty prompt, sending error message');
       await this.getSock()!.sendMessage(chatJid, {
         text: '❌ Please provide a message.'
       });
       return;
     }
 
+    console.log('Setting presence to composing');
     await this.getSock()!.sendPresenceUpdate('composing', chatJid);
+
 
     try {
       let response;
       const senderName = sender.split('@')[0];
 
-      console.log(`🤖 Processing AI request from ${senderName}: "${prompt.substring(0, 50)}..."`);
+      console.log(`🚀 Processing AI request from ${senderName}: "${prompt.substring(0, 50)}..."`);
 
       if (mediaBuffer && mediaType) {
+        console.log('Calling generateWithMedia');
         response = await this.aiService.generateWithMedia(prompt, [
           { data: mediaBuffer, mediaType, filename }
         ], {
@@ -147,6 +185,7 @@ export class MessageHandler {
         }, chatJid, senderName);
       } else {
         if (useThinking) {
+          console.log('Calling generateWithThinking');
           response = await this.aiService.generateWithThinking(prompt, {
             useSearch,
             useUrlContext,
@@ -154,6 +193,7 @@ export class MessageHandler {
             systemPrompt: 'You are a helpful WhatsApp assistant. Provide clear, concise, and informative responses. Use emojis appropriately to make responses engaging.'
           }, chatJid, senderName);
         } else {
+          console.log('Calling generateResponse');
           response = await this.aiService.generateResponse(prompt, {
             useSearch,
             useUrlContext,
@@ -163,7 +203,15 @@ export class MessageHandler {
         }
       }
 
-      let responseText = response.content;
+      console.log('AI service returned response:', {
+        hasContent: !!response.content,
+        contentLength: response.content?.length || 0,
+        hasSources: !!response.sources?.length,
+        hasToolCalls: !!response.toolCalls?.length
+      });
+
+      let responseText = response.content || 'No response generated';
+
       if (response.sources && response.sources.length > 0) {
         responseText += '\n\n📚 Sources:';
         response.sources.forEach((source, index) => {
@@ -177,16 +225,27 @@ export class MessageHandler {
         responseText += `\n\n🛠️ Tools used: ${toolsUsed.join(', ')}`;
       }
 
-      await this.getSock()!.sendMessage(chatJid, { text: responseText });
+      console.log(`Sending response to ${senderName}: "${responseText.substring(0, 100)}..."`);
+      console.log(`Response length: ${responseText.length} chars`);
 
+      const sock = this.getSock();
+      if (!sock) {
+        console.error('❌ No WhatsApp socket available!');
+        throw new Error('WhatsApp socket not available');
+      }
+
+      await sock.sendMessage(chatJid, { text: responseText });
       console.log(`✅ AI response sent to ${senderName} (${responseText.length} chars)`);
-      await this.saveMessageToSheets({
+
+      this.saveMessageToSheets({
         timestamp: new Date().toISOString(),
         direction: '→',
         sender: 'AI Bot',
         chat: chatJid.split('@')[0],
         messageType: 'text',
         content: responseText
+      }).catch(error => {
+        Logger.error('Failed to save AI response to sheets', error);
       });
 
       Logger.ai('AI response sent', {
@@ -214,15 +273,24 @@ export class MessageHandler {
     content: string;
   }): Promise<void> {
     const sheetsService = this.getSheetsService();
-    if (!sheetsService) return;
+    console.log(`Google Sheets service available: ${sheetsService ? 'YES' : 'NO'}`);
+
+    if (!sheetsService) {
+      console.log('No Google Sheets service - skipping save');
+      return;
+    }
 
     try {
+      console.log(`Saving message to sheets: ${messageData.sender} -> "${messageData.content.substring(0, 50)}..."`);
       await sheetsService.appendMessage(messageData as MessageData);
+      console.log('✅ Message saved to Google Sheets successfully');
+
       Logger.database('Message saved to Google Sheets', {
         sender: messageData.sender,
         messageType: messageData.messageType
       });
     } catch (error) {
+      console.error('❌ Failed to save to Google Sheets:', error);
       Logger.error('Failed to save message to sheets', error);
     }
   }

@@ -1,16 +1,8 @@
-// WhatsApp Bot utility functions
-
-/**
- * Check if content should trigger AI response
- */
 export function shouldTriggerAI(content: string): boolean {
-  return content.trim().length > 0;
+  const lowerContent = content.toLowerCase().trim();
+  return lowerContent.startsWith('/ai') || lowerContent.startsWith('/search');
 }
 
-
-/**
- * Parse AI command from message content
- */
 export function parseAICommand(content: string): {
   useSearch: boolean;
   useUrlContext: boolean;
@@ -46,9 +38,6 @@ export function parseAICommand(content: string): {
   return { useSearch, useUrlContext, useCodeExecution, useThinking, prompt, isHelp: false };
 }
 
-/**
- * Generate help message
- */
 export function generateHelpMessage(sheetsConnected: boolean): string {
   const sheetsStatus = sheetsConnected ? '✅ Connected' : '❌ Not configured';
 
@@ -84,16 +73,14 @@ Examples:
 💡 Pro Tip: Send an image with "/ai analyze this" for detailed visual analysis!`;
 }
 
-/**
- * Format tool usage for response
- */
 export function formatToolUsage(toolCalls: any[]): string[] {
   const toolsUsed: string[] = [];
   if (toolCalls && toolCalls.length > 0) {
     toolCalls.forEach(tc => {
-      if (tc.toolName === 'google_search') toolsUsed.push('🔍 Web Search');
-      if (tc.toolName === 'code_execution') toolsUsed.push('💻 Code Execution');
-      if (tc.toolName === 'url_context') toolsUsed.push('🔗 URL Context');
+      const toolType = tc.type || tc.toolName;
+      if (toolType === 'google_search') toolsUsed.push('🔍 Web Search');
+      if (toolType === 'code_execution') toolsUsed.push('💻 Code Execution');
+      if (toolType === 'url_context') toolsUsed.push('🔗 URL Context');
     });
   }
   return toolsUsed;
