@@ -17,7 +17,7 @@ export class MessageHandler {
   ) {}
 
   async handleMessage(messages: BaileysEventMap['messages.upsert']): Promise<void> {
-    if (messages.type !== 'notify') return;
+    if (messages.type !== 'notify' && messages.type !== 'append') return;
 
     for (const m of messages.messages) {
       if (!m.message) continue;
@@ -27,6 +27,7 @@ export class MessageHandler {
       const isFromMe = m.key.fromMe || false;
       let sender = isFromMe ? this.getSock()!.user!.id : (m.key.participant || chatJid);
       const timestamp = new Date((m.messageTimestamp as number) * 1000);
+
 
       let content = '';
       let mediaType: string | undefined;
@@ -68,7 +69,7 @@ export class MessageHandler {
 
 
       let isAIInteraction = false;
-      if (shouldTriggerAI(content)) {
+      if (!isFromMe && shouldTriggerAI(content)) {
         isAIInteraction = true;
         try {
           let mediaBuffer: Buffer | undefined;

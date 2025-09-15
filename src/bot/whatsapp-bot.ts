@@ -188,6 +188,10 @@ export class WhatsAppBot {
 
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const errorMessage = lastDisconnect?.error?.message || 'Unknown error';
+
+        // Log the disconnect reason for debugging
+        Logger.connection(`Connection closed - Status: ${statusCode}, Message: ${errorMessage}`);
 
         // Check various disconnect reasons
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
@@ -197,18 +201,15 @@ export class WhatsAppBot {
         const isTimedOut = statusCode === DisconnectReason.timedOut;
 
         // Don't retry if logged out or if already reconnecting
-        const shouldReconnect = !isLoggedOut && !isRestartRequired && !this.isReconnecting;
+        const shouldReconnect = !isLoggedOut && !this.isReconnecting;
 
         if (isLoggedOut) {
           Logger.connection('Session logged out - restart required');
           console.log('❌ WhatsApp session logged out. Please restart the bot to scan QR code again.');
           process.exit(1);
-        } else if (isRestartRequired) {
-          Logger.connection('Restart required by WhatsApp');
-          console.log('🔄 WhatsApp requires restart. Please restart the bot.');
-          process.exit(1);
-        } else if (shouldReconnect && (isConnectionLost || isConnectionClosed || isTimedOut)) {
-          Logger.connection(`Connection ${isTimedOut ? 'timed out' : 'lost'}, reconnecting...`);
+        } else if (shouldReconnect && (isConnectionLost || isConnectionClosed || isTimedOut || isRestartRequired)) {
+          // Treat restartRequired as a reconnectable issue during auth process
+          Logger.connection(`Connection ${isTimedOut ? 'timed out' : isRestartRequired ? 'requires restart' : 'lost'}, reconnecting...`);
           this.isReconnecting = true;
           console.log('🔄 Connection lost. Reconnecting in 3 seconds...');
           setTimeout(() => {
@@ -216,8 +217,8 @@ export class WhatsAppBot {
             this.connectToWhatsApp();
           }, 3000);
         } else {
-          Logger.connection(`Connection closed (${statusCode})`);
-          console.log('❌ Connection closed. Please restart the bot if needed.');
+          Logger.connection(`Connection closed (${statusCode}) - ${errorMessage}`);
+          console.log('❌ Connection closed unexpectedly. Please restart the bot if needed.');
         }
       } else if (connection === 'open') {
         this.isReconnecting = false; // Reset reconnecting flag
